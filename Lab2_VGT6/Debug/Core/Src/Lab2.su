@@ -1,0 +1,8 @@
+../Core/Src/Lab2.c:14:6:init_exercise1	8	static
+../Core/Src/Lab2.c:27:6:redLedOn	8	static
+../Core/Src/Lab2.c:34:6:yelLedOn	8	static
+../Core/Src/Lab2.c:40:6:grnLedOn	8	static
+../Core/Src/Lab2.c:46:6:error	8	static
+../Core/Src/Lab2.c:52:6:init_exercise2	8	static
+../Core/Src/Lab2.c:65:6:exercise1	8	static
+../Core/Src/Lab2.c:89:6:exercise2	8	static
