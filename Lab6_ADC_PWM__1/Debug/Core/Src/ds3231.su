@@ -1,0 +1,3 @@
+../Core/Src/ds3231.c:23:6:ds3231_init	8	static
+../Core/Src/ds3231.c:33:6:ds3231_Write	40	static
+../Core/Src/ds3231.c:38:6:ds3231_ReadTime	24	static
