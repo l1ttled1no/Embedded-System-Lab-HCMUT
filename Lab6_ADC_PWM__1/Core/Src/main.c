@@ -60,7 +60,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+// 0 = Text Mode, 1 = Graph Mode
+uint8_t display_mode = 0;
+uint8_t mode_changed_flag = 1; // Trigger initial screen setup
 
+// Graph Settings
+#define GRAPH_X_START   20
+#define GRAPH_Y_BASE    300
+#define GRAPH_WIDTH     200
+#define GRAPH_HEIGHT    100 // Increased height for better visibility
+#define GRAPH_MIN_VAL   500.0f
+#define GRAPH_MAX_VAL   700.0f
+// Graph State
+static uint16_t g_curX = 0;
+static uint16_t g_prevY = GRAPH_Y_BASE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -225,47 +238,157 @@ uint8_t isButtonRight()
     else
         return 0;
 }
+// Check Button 12 for Mode Switching
+uint8_t isButtonModeSwitch()
+{
+    if (button_count[12] == 1) // Using Index 12
+        return 1;
+    else
+        return 0;
+}
+
+
+void display_TextMode(void) {
+    // Logic to display text info
+    lcd_ShowStr(10, 100, "Voltage:", RED, BLACK, 16, 0);
+    lcd_ShowFloatNum(130, 100, sensor_GetVoltage(), 4, RED, BLACK, 16);
+
+    lcd_ShowStr(10, 120, "Current:", RED, BLACK, 16, 0);
+    lcd_ShowFloatNum(130, 120, sensor_GetCurrent(), 4, RED, BLACK, 16);
+
+    lcd_ShowStr(10, 140, "Light:", RED, BLACK, 16, 0);
+    lcd_ShowIntNum(130, 140, sensor_GetLight(), 4, RED, BLACK, 16);
+
+    lcd_ShowStr(10, 160, "Potentiometer:", RED, BLACK, 16, 0);
+    lcd_ShowIntNum(130, 160, sensor_GetPotentiometer(), 4, RED, BLACK, 16);
+
+    lcd_ShowStr(10, 180, "Potentio %:", RED, BLACK, 16, 0);
+    lcd_ShowIntNum(130, 180, glb_pct_Potentiometer, 4, RED, BLACK, 16);
+
+    lcd_ShowStr(10, 200, "Temp:", RED, BLACK, 16, 0);
+    lcd_ShowFloatNum(130, 200, sensor_GetTemperature(), 4, RED, BLACK, 16);
+
+    // Date and Time
+    ds3231_ReadTime();
+    char time_str[9];
+    sprintf(time_str, "%02d:%02d:%02d", ds3231_hours, ds3231_min, ds3231_sec);
+    lcd_ShowStr(130, 220, time_str, RED, BLACK, 16, 0);
+
+    char date_str[11];
+    sprintf(date_str, "%02d/%02d/20%02d", ds3231_date, ds3231_month, ds3231_year);
+    lcd_ShowStr(130, 240, date_str, RED, BLACK, 16, 0);
+}
+
+void display_GraphMode(void) {
+    float voltage = sensor_GetVoltage();
+    float current = sensor_GetCurrent();
+
+    // 1. Draw Title
+    lcd_ShowStr(10, 40, "Power Zoom (mW)", WHITE, BLACK, 16, 0);
+
+    // --- DEBUG RAW VALUES ---
+    lcd_ShowStr(10, 60, "V:", GREEN, BLACK, 16, 0);
+    lcd_ShowFloatNum(40, 60, voltage, 4, GREEN, BLACK, 16);
+    lcd_ShowStr(100, 60, "mA:", GREEN, BLACK, 16, 0);
+    lcd_ShowFloatNum(130, 60, current, 5, GREEN, BLACK, 16);
+    // ------------------------
+
+    // 2. Calculate Power
+    // Using your specific formula from the provided code
+    float power_mW = (voltage * current) / 100.0f;
+
+    // Show current Power value
+    lcd_ShowStr(10, 80, "P(mW/10):", YELLOW, BLACK, 16, 0);
+    lcd_ShowFloatNum(80, 80, power_mW, 5, YELLOW, BLACK, 16);
+
+    // 3. NEW: Calculate "Zoomed" Y-Offset
+    float range = GRAPH_MAX_VAL - GRAPH_MIN_VAL; // Range is 200 (700 - 500)
+
+    // Clamp the value so it doesn't draw outside the box
+    float display_val = power_mW;
+    if (display_val < GRAPH_MIN_VAL) display_val = GRAPH_MIN_VAL;
+    if (display_val > GRAPH_MAX_VAL) display_val = GRAPH_MAX_VAL;
+
+    // Subtract Min so we start plotting from the bottom of our range
+    float val_offset = display_val - GRAPH_MIN_VAL;
+
+    // Scale to pixels
+    uint16_t pixel_height = (uint16_t)((val_offset / range) * GRAPH_HEIGHT);
+
+    // Invert for Screen Coordinates (Y=0 is top)
+    uint16_t pointY = GRAPH_Y_BASE - pixel_height;
+    uint16_t pointX = GRAPH_X_START + g_curX;
+
+    // 4. Handle Graph Wrap-around
+    if (g_curX >= GRAPH_WIDTH) {
+        // Clear graph area
+        lcd_Fill(GRAPH_X_START, GRAPH_Y_BASE - GRAPH_HEIGHT, GRAPH_X_START + GRAPH_WIDTH, GRAPH_Y_BASE + 1, BLACK);
+
+        // Draw Frame
+        lcd_DrawRectangle(GRAPH_X_START, GRAPH_Y_BASE - GRAPH_HEIGHT, GRAPH_X_START + GRAPH_WIDTH, GRAPH_Y_BASE, WHITE);
+
+        g_curX = 0;
+        pointX = GRAPH_X_START;
+        g_prevY = pointY;
+    }
+
+    // 5. Draw Line
+    if (g_curX > 0) {
+        // Draw line from previous point to current point
+        lcd_DrawLine(pointX - 5, g_prevY, pointX, pointY, CYAN);
+    }
+
+    g_prevY = pointY;
+    g_curX += 5;
+}
 
 uint8_t count_adc = 0;
 uint8_t condition_met = 0;
 uint8_t buzzer_volume = 0;
 uint8_t timer_buzzer = 0;
+
 void test_Adc(){
-	count_adc = (count_adc + 1)%20;
-	if(count_adc == 0){
-		if (sensor_Read() == 0){
-      return; // Error reading ADC
+    // --- PART 1: Button Check (Runs every 50ms) ---
+    if(isButtonModeSwitch()){
+        display_mode = !display_mode; // Toggle Mode
+        mode_changed_flag = 1;        // Set flag to clear screen
+
+        // UX Trick: Reset the counter to 0 so the screen updates
+        // immediately on the next loop, rather than waiting for the second to finish.
+        count_adc = 19;
+
+        // Reset graph X if entering graph mode
+        if(display_mode == 1) {
+            g_curX = 0;
+        }
     }
-		lcd_ShowStr(10, 100, "Voltage:", RED, BLACK, 16, 0);
-		lcd_ShowFloatNum(130, 100,sensor_GetVoltage(), 4, RED, BLACK, 16);
-		lcd_ShowStr(10, 120, "Current:", RED, BLACK, 16, 0);
-		lcd_ShowFloatNum(130, 120,sensor_GetCurrent(), 4, RED, BLACK, 16);
-		lcd_ShowStr(10, 140, "Light:", RED, BLACK, 16, 0);
-		lcd_ShowIntNum(130, 140, sensor_GetLight(), 4, RED, BLACK, 16);
-		lcd_ShowStr(10, 160, "Potentiometer:", RED, BLACK, 16, 0);
-		lcd_ShowIntNum(130, 160, sensor_GetPotentiometer(), 4, RED, BLACK, 16);
-    lcd_ShowStr(10, 180, "Potentiometer%:", RED, BLACK, 16, 0);
-		lcd_ShowIntNum(130, 180, glb_pct_Potentiometer, 4, RED, BLACK, 16);
-		lcd_ShowStr(10, 200, "Temperature:", RED, BLACK, 16, 0);
-		lcd_ShowFloatNum(130, 200,sensor_GetTemperature(), 4, RED, BLACK, 16);
-    lcd_ShowStr(10, 220, "Time:", RED, BLACK, 16, 0);
-    ds3231_ReadTime();
-    char time_str[9];
-    sprintf(time_str, "%02d:%02d:%02d", ds3231_hours, ds3231_min, ds3231_sec);
-    lcd_ShowStr(130, 220, time_str, RED, BLACK, 16, 0);
-    lcd_ShowStr(10, 240, "Date:", RED, BLACK, 16, 0);
-    char date_str[11];
-    sprintf(date_str, "%02d/%02d/20%02d", ds3231_date, ds3231_month, ds3231_year);
-    lcd_ShowStr(130, 240, date_str, RED, BLACK, 16, 0);
-    // Write
-//    lcd_ShowStr(10, 210, "condition:", RED, BLACK, 16, 0);
-//    if (condition_met){
-//        lcd_ShowStr(130, 210, "MET", GREEN, BLACK, 16, 0);
-//    } else {
-//        lcd_ShowStr(130, 210, "NOT MET", RED, BLACK, 16, 0);
-//    }
-    // checkingCondition();
-	}
+
+    // --- PART 2: Periodic Update (Runs every 1s) ---
+    count_adc = (count_adc + 1) % 20;
+
+    if(count_adc == 0){
+        // Always read sensors so data is fresh
+        if (sensor_Read() == 0) return;
+
+        // Handle Screen Clearing if mode changed
+        if(mode_changed_flag){
+            lcd_Clear(BLACK);
+            mode_changed_flag = 0;
+
+            // If entering Graph Mode, draw axes immediately
+            if(display_mode == 1) {
+                 lcd_DrawLine(GRAPH_X_START, GRAPH_Y_BASE, GRAPH_X_START + GRAPH_WIDTH, GRAPH_Y_BASE, WHITE);
+                 lcd_DrawLine(GRAPH_X_START, GRAPH_Y_BASE, GRAPH_X_START, GRAPH_Y_BASE - GRAPH_HEIGHT, WHITE);
+            }
+        }
+
+        // Select Display Routine
+        if(display_mode == 0) {
+            display_TextMode();
+        } else {
+            display_GraphMode();
+        }
+    }
 }
 char* err_msg = "Caution: Potentiometer percentage exceeded 70%\r\n";
 void checkingCondition(){
