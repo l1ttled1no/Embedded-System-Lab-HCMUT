@@ -1,0 +1,7 @@
+../Core/Src/sensor.c:11:6:sensor_init	1
+../Core/Src/sensor.c:15:6:sensor_Read	1
+../Core/Src/sensor.c:19:10:sensor_GetLight	1
+../Core/Src/sensor.c:23:10:sensor_GetPotentiometer	1
+../Core/Src/sensor.c:27:7:sensor_GetVoltage	1
+../Core/Src/sensor.c:31:7:sensor_GetCurrent	1
+../Core/Src/sensor.c:35:7:sensor_GetTemperature	1
