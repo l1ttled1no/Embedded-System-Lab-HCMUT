@@ -1,0 +1,17 @@
+../Core/Src/touch.c:47:13:TP_Write_Byte	24	static
+../Core/Src/touch.c:61:17:TP_Read_AD	24	static
+../Core/Src/touch.c:90:17:TP_Read_XOY	48	static
+../Core/Src/touch.c:115:16:TP_Read_XY	24	static
+../Core/Src/touch.c:126:16:TP_Read_XY2	32	static
+../Core/Src/touch.c:144:13:TP_Drow_Touch_Point	32	static
+../Core/Src/touch.c:155:13:TP_Draw_Big_Point	16	static
+../Core/Src/touch.c:164:6:LCD_DrawRoughLine	64	static
+../Core/Src/touch.c:199:16:TP_Scan	16	static
+../Core/Src/touch.c:234:13:TP_Save_Adjdata	8	static
+../Core/Src/touch.c:240:16:TP_Get_Adjdata	16	static
+../Core/Src/touch.c:254:6:touch_Adjust	64	static
+../Core/Src/touch.c:382:6:touch_init	8	static
+../Core/Src/touch.c:389:6:touch_Scan	8	static
+../Core/Src/touch.c:393:9:touch_IsTouched	8	static
+../Core/Src/touch.c:397:10:touch_GetX	4	static
+../Core/Src/touch.c:401:10:touch_GetY	4	static
