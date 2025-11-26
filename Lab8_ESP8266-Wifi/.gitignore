@@ -1,0 +1,20 @@
+# Ignore local configuration with credentials
+esp_wifi/config_local.h
+
+# STM32 Build files
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# IDE files
+.settings/
+.project
+.cproject
+*.launch
