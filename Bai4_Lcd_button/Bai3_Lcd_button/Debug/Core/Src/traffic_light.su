@@ -1,0 +1,5 @@
+../Core/Src/traffic_light.c:22:6:Blink	24	static
+../Core/Src/traffic_light.c:59:6:TrafficLight_Update	24	static
+../Core/Src/traffic_light.c:161:6:handleSwitchState	24	static
+../Core/Src/traffic_light.c:189:6:handleIncreaseCounter	4	static
+../Core/Src/traffic_light.c:208:6:handleConfirmValue	24	static

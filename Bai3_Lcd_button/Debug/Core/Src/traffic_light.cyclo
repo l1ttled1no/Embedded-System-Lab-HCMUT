@@ -1,0 +1,5 @@
+../Core/Src/traffic_light.c:27:6:Blink	8
+../Core/Src/traffic_light.c:67:6:TrafficLight_Update	11
+../Core/Src/traffic_light.c:169:6:handleSwitchState	5
+../Core/Src/traffic_light.c:198:6:handleIncreaseCounter	5
+../Core/Src/traffic_light.c:220:6:handleConfirmValue	3

@@ -1,0 +1,15 @@
+../Core/Src/main.c:89:5:main	7
+../Core/Src/main.c:170:6:SystemClock_Config	3
+../Core/Src/main.c:211:6:system_init	1
+../Core/Src/main.c:223:6:test_LedDebug	2
+../Core/Src/main.c:230:6:test_7seg	1
+../Core/Src/main.c:236:6:test_button	3
+../Core/Src/main.c:245:6:updateTime	1
+../Core/Src/main.c:255:9:isButtonUp	2
+../Core/Src/main.c:262:9:isButtonDown	2
+../Core/Src/main.c:270:6:isButtonUp_2000	3
+../Core/Src/main.c:283:6:displayTime	1
+../Core/Src/main.c:294:6:adjustTime	40
+../Core/Src/main.c:423:6:setAlarm	6
+../Core/Src/main.c:449:6:checkAlarm	5
+../Core/Src/main.c:501:6:Error_Handler	1

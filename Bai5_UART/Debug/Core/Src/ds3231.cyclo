@@ -1,0 +1,3 @@
+../Core/Src/ds3231.c:22:6:ds3231_init	2
+../Core/Src/ds3231.c:35:6:ds3231_Write	1
+../Core/Src/ds3231.c:40:6:ds3231_ReadTime	1
